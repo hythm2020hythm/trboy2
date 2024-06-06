@@ -1,0 +1,581 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        #score-counter {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px;
+            background-color: #333;
+            border-bottom-right-radius: 10px;
+            color: white;
+            z-index: 999;
+        }
+
+        #quiz-container {
+            max-width: 600px;
+            margin: auto;
+            padding: 60px 20px 20px; /* تم تعديل ال padding ليضمن عدم تغطية الصورة */
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            position: relative; /* تمت إضافة position: relative; للسماح لـ #score-counter بالتحكم فيه */
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: white;
+            background-color: #2196F3;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0c0c0c;
+        }
+
+        #timer {
+            margin-bottom: 10px;
+        }
+
+        #result-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result-text {
+            margin-bottom: 10px;
+        }
+
+        .correct {
+            background-color: green;
+            color: white;
+        }
+
+        .incorrect {
+            background-color: red;
+            color: white;
+        }
+
+        /* CSS for displaying images to fit the screen */
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="score-counter">Score: <span id="score">0</span></div>
+
+    <div id="quiz-container">
+        <img id="question-image" src="" alt="Question Image">
+        <div id="choices"></div>
+        <button onclick="checkAnswer()">Submit Answer</button>
+        <p id="timer"></p>
+    </div>
+
+    <div id="result-container">
+        <h2>Quiz Result</h2>
+        <p class="result-text" id="result"></p>
+        <div id="correct-answers"></div>
+        <button id="retryBtn" style="display: none;" onclick="retryQuiz()">Retry Quiz</button>
+    </div>
+
+    <script>
+        var currentQuestion = 0;
+        var score = 0;
+        var timeLeft = 1800; // تحديد عدد الثواني
+        var timerInterval;
+
+        var quizData = [
+ 
+          
+      
+                       {
+    "question": "التقويم البديل اساس المنهج الحديث",
+    "choices": ["صح", "خطأ"],
+    "correctAnswer": "صح"
+},
+
+
+             {
+    "question": "يمكن ان يؤدى المعلم التوجيه النفسي",
+    "choices": ["صح", "خطأ"],
+    "correctAnswer": "صح"
+},
+
+
+             {
+    "question": "المعلم الملقن يتبع المدرسه",
+    "choices": ["السلوكيه", "المعرفيه"],
+    "correctAnswer": "السلوكيه"
+},
+
+
+             {
+    "question": "المعلم المرشد يتبع المدرسه",
+    "choices": ["السلوكيه", "المعرفيه"],
+    "correctAnswer": "المعرفيه"
+},
+
+
+             {
+    "question": "المعلم الميسر يتبع المدرسه",
+    "choices": ["المعرفيه", "البنائيه"],
+    "correctAnswer": "البنائيه"
+},
+
+
+             {
+    "question": "تبدا صعوبات التعلم في مرحله الطفوله",
+    "choices": ["المبكره", "المتاخره"],
+    "correctAnswer": "المبكره"
+},
+             {
+    "question": "عدد محاور علم النفس",
+    "choices": ["4", "5"],
+    "correctAnswer": "4"
+},
+
+
+             {
+    "question": "عند التعرض للتنمرض الاسلوب الصحيح هو العرض علي الاخصائى",
+    "choices": ["صح", "خطأ"],
+    "correctAnswer": "صح"
+},
+
+
+             {
+    "question": "اخر اساليب تعديل السلوك هو العقاب",
+    "choices": ["صح", "خطأ"],
+    "correctAnswer": "صح"
+},
+
+
+             {
+    "question": "عند عزل طالبين اتخانقوا دا يسمى",
+    "choices": ["اقصاء", "تقييم"],
+    "correctAnswer": "اقصاء"
+},
+
+
+             {
+    "question": "الكلام يستخدم للتعبير ",
+    "choices": ["اللفظى", "غير اللفظى"],
+    "correctAnswer": "اللفظى"
+},
+
+
+             {
+    "question": "الانماءات للتعبير",
+    "choices": ["اللفظى", "غير اللفظى"],
+    "correctAnswer": "غير اللفظى"
+},
+
+
+             {
+    "question": "يكون النمو اللغوى سرع في السنه",
+    "choices": ["الثالثه", "الرابعة"],
+    "correctAnswer": "الرابعة"
+},
+
+
+             {
+    "question": "حاسة تكون غير مكتمله عند الطفل",
+    "choices": ["السمع", "التذوق","البصر"],
+    "correctAnswer": "البصر"
+},
+
+
+             {
+    "question": "نظرية بيكون فيها بناء معرفه جديده بناء علي معرفه سابقه",
+    "choices": ["بنائيه", "معرفيه","سلوكيه"],
+    "correctAnswer": "بنائيه"
+},
+
+
+             {
+    "question": "طفل فرط الحركهADHD يشعر بالتعب من كثره الحركه ",
+    "choices": ["صح", "خطأ"],
+    "correctAnswer": "خطأ"
+},
+
+       {
+    "question": "المتعلم او الطالب يستخرج اشكال ",
+    "choices": ["فهم", "تحليل","تذكر"],
+    "correctAnswer": "فهم"
+},
+
+
+       {
+    "question": "حدثت مشاجرة بين طفلين في داخل الفصل وقام المعلم بفصل كل منهما يتحدث معه على حده – هذا يعتبر",
+    "choices": ["عقاب", "انطفاء","اقصاء"],
+    "correctAnswer": "اقصاء"
+},
+
+
+
+       {
+    "question": "اذا كان طفل منطوى ما هي الطريقه الصحيحه من المعلم للتعامل مع هذا السلوك",
+    "choices": ["يحرجه امام زملائه", "يحاوره بهدوء","يتواصل مع والديه"],
+    "correctAnswer": "يحاوره بهدوء"
+},
+
+       {
+    "question": "نسبة التخمين في سؤال الصواب والخطأ",
+    "choices": ["20", "50","80"],
+    "correctAnswer": "50"
+},
+             {
+    "question": "المنوال هو القيمه الاكثر تكرارا",
+    "choices": ["صح", "خطأ"],
+    "correctAnswer": "صح"
+},
+
+             {
+    "question": "المدرسه البنائيه تعبر عن الاكتشاف",
+    "choices": ["صح", "خطأ"],
+    "correctAnswer": "صح"
+},
+
+
+
+
+       {
+    "question": "رتب من الاعم الي الاقل عموميه (الاختبار – التقويم – القياس – التقييم)",
+    "choices": ["التقويم – التقييم – القياس - الاختبار", "الاختبار – قياس – تقييم - تقويم"],
+    "correctAnswer": "التقويم – التقييم – القياس - الاختبار" 
+},
+             {
+    "question": "التقويم البديل قائم على اداء المتعلم ويتبع النظريه ",
+    "choices": ["البنائيه", "المعرفيه"],
+    "correctAnswer": "البنائيه"
+},
+             {
+    "question": "التقويم التقليدي يتبع المنهج القديم",
+    "choices": ["صح", "خطأ"],
+    "correctAnswer": "صح"
+},
+             {
+    "question": "معلم يقدم اقواله وافعاله ولا ياخذ راي الطلاب دا معلم متسلط",
+    "choices": ["صح", "خطأ"],
+    "correctAnswer": "صح"
+},
+
+
+             {
+    "question": "الذاكره التى تحتفظ بالمعلومات لمده 30ثانيه",
+    "choices": ["طويله المدى", "قصيره المدى"],
+    "correctAnswer": "قصيره المدى"
+},
+
+
+
+
+             {
+    "question": "5-2-5-6-5-4-5 المنوال هنا ",
+    "choices": ["5", "2","6","4"],
+    "correctAnswer": "5"
+},
+             {
+    "question": "السمه مكون اساسي من الشخصيه",
+    "choices": ["صح", "خطأ"],
+    "correctAnswer": "صح"
+},
+
+
+
+             {
+    "question": "يصنف الطالب الذى لديه خلل في وظائف المخ ",
+    "choices": ["صعوبات تعلم", "تاخر دراسى","بطءتعلم"],
+    "correctAnswer": "بطءتعلم"
+},
+             {
+    "question": "طفل عنده 5 سنوات يكون الحصيله اللغويه لديه .... كلمه",
+    "choices": ["5000", "10000"],
+    "correctAnswer": "5000"
+},
+             {
+    "question": "الطالب الذى ليس لديه دافعيه للتعلم يصنف تبع ",
+    "choices": ["صعوبات تعلم", "تاخر دراسى","بطءتعلم"],
+    "correctAnswer": "تاخر دراسى"
+},
+
+             {
+    "question": "عندما يكون المعلم كثير الفكاهه داخل الفصل ماذا يحدث",
+    "choices": ["تشجيع علي التعلم", "تكثر الفوضى"],
+    "correctAnswer": "تكثر الفوضى"
+},
+             {
+    "question": "يستخدم التعزيز كوسيله من وسائل تعديل السلوك",
+    "choices": ["صح", "خطأ"],
+    "correctAnswer": "صح"
+},
+             {
+    "question": "تستند نظريه البيت الدائرى الي النظريه",
+    "choices": ["المعرفيه", "البنائية","السلوكيه"],
+    "correctAnswer": "البنائية"
+},
+             {
+    "question": "طالبه تقلد معلمتها في الفصل فيما يخص سلوكيات حسنه دا يتبع المنهج",
+    "choices": ["القديم", "الجديد","الخفى"],
+    "correctAnswer": "الخفى"
+},
+
+             {
+    "question": "كلمة تدل علي الفهم",
+    "choices": ["التطبيق", "الاستنتاج","التحليل"],
+    "correctAnswer": "الاستنتاج"
+},
+             {
+    "question": "تقديرات الطلاب تعتبرمقياس",
+    "choices": ["اسمى", "رتبى"],
+    "correctAnswer": "رتبى"
+},
+
+             {
+    "question": "مقياس الذكاء يعتبر مقياس",
+    "choices": ["اسمى", "فترى"],
+    "correctAnswer": "فترى"
+},
+             {
+    "question": "اقل انواع المقاييس في الدقه",
+    "choices": ["الاسمى", "الرتبى"],
+    "correctAnswer": "الاسمى"
+},
+             {
+    "question": "ادق انواع المقاييس",
+    "choices": ["النسبى", "رتبى"],
+    "correctAnswer": "النسبى"
+},
+
+
+
+             {
+    "question": "تلقى التلميذ مساعده في حجرة خاصه حسب جدول ثابت من قبل معلم التربيه الخاصه يسمى برنامج",
+    "choices": ["المعلم المتجول", "غرفة المصادر","الفصول الخاصه"],
+    "correctAnswer": "غرفة المصادر"
+},
+
+             {
+    "question": "يبدأ النمو اللغوى للطفل من لحظه الميلاد",
+    "choices": ["صح", "خطأ"],
+    "correctAnswer": "صح"
+},
+             {
+    "question": "صاحب نظرية السمات الشخصيه الاربعه",
+    "choices": ["ايرنك", "فلمنج"],
+    "correctAnswer": "ايرنك"
+},
+             {
+    "question": "انماط التعلم السبعه للعالم",
+    "choices": ["ايرنك", "فلمنج"],
+    "correctAnswer": "فلمنج"
+},
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+
+        ];
+
+        // قم بترتيب الأسئلة بشكل عشوائي
+        shuffleArray(quizData);
+
+        function shuffleArray(array) {
+            for (var i = array.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = array[i];
+                array[i] = array[j];
+                array[j] = temp;
+            }
+            return array;
+        }
+
+        function loadQuestion() {
+            var currentQuiz = quizData[currentQuestion];
+
+            var questionImageElement = document.getElementById('question-image');
+            var choicesElement = document.getElementById('choices');
+
+            if (currentQuiz.imageSrc) {
+                questionImageElement.src = currentQuiz.imageSrc; // تعيين مصدر الصورة
+                questionImageElement.style.display = 'block'; // عرض الصورة
+            } else {
+                questionImageElement.style.display = 'none'; // إخفاء الصورة إذا لم تكن متاحة
+            }
+
+            choicesElement.innerHTML = '';
+
+            // عرض السؤال كنص عادي إذا لم يكن هناك صورة
+            if (!currentQuiz.imageSrc) {
+                choicesElement.innerHTML += '<p>' + currentQuiz.question + '</p>';
+            }
+
+            for (var i = 0; i < currentQuiz.choices.length; i++) {
+                var choice = currentQuiz.choices[i];
+                choicesElement.innerHTML += '<label><input type="radio" name="choice" value="' + choice + '"> ' + choice + '</label>';
+            }
+
+            startTimer(); // بدء الموقت عند تحميل كل سؤال
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(function () {
+                document.getElementById('timer').innerHTML = 'Time Left: ' + timeLeft + 's';
+
+                if (timeLeft === 0) {
+                    clearInterval(timerInterval);
+                    alert('Time is up!'); // عرض رسالة انتهاء الوقت
+                    showResult(); // عرض النتيجة النهائية عند انتهاء الوقت
+                } else {
+                    timeLeft--;
+                }
+            }, 1000);
+        }
+
+        function checkAnswer() {
+            var selectedOption = document.querySelector('input[name="choice"]:checked');
+            if (!selectedOption) {
+                alert('Please select an answer.');
+                return;
+            }
+
+            var userAnswer = selectedOption.value;
+            var currentQuiz = quizData[currentQuestion];
+
+            var choicesLabels = document.querySelectorAll('label');
+
+            for (var i = 0; i < choicesLabels.length; i++) {
+                if (currentQuiz.correctAnswer === currentQuiz.choices[i]) {
+                    choicesLabels[i].classList.add('correct');
+                } else {
+                    choicesLabels[i].classList.add('incorrect');
+                }
+            }
+
+            if (userAnswer === currentQuiz.correctAnswer) {
+                score++;
+                document.getElementById('score').textContent = score;
+            }
+
+            clearInterval(timerInterval); // قبل التحقق من الإجابة، قم بإيقاف الموقت
+
+            currentQuestion++;
+
+            if (currentQuestion < quizData.length) {
+                setTimeout(function () {
+                    loadQuestion();
+                    resetColors();
+                }, 3000);
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            var resultElement = document.getElementById('result');
+            var correctAnswersElement = document.getElementById('correct-answers');
+
+            resultElement.innerHTML = 'Your Score: ' + score + ' out of ' + quizData.length;
+
+            correctAnswersElement.innerHTML = '<h3>Correct Answers:</h3>';
+            for (var i = 0; i < quizData.length; i++) {
+                var q = quizData[i];
+                var imgSrc = q.imageSrc;
+                var imgElement = '<img src="' + imgSrc + '" alt="Question Image">';
+                correctAnswersElement.innerHTML += imgElement + '<strong>Q: ' + q.question + '</strong><br>A: ' + q.correctAnswer + '<br>';
+            }
+
+            document.getElementById('result-container').style.display = 'block';
+            document.getElementById('retryBtn').style.display = 'block';
+        }
+
+        function resetColors() {
+            var choicesLabels = document.querySelectorAll('label');
+            for (var i = 0; i < choicesLabels.length; i++) {
+                choicesLabels[i].classList.remove('correct', 'incorrect'); // إزالة الأنماط المضافة سابقًا
+            }
+        }
+
+        function retryQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            timeLeft = 1800; // إعادة تعيين الوقت للقيمة الأصلية
+
+            // قم بترتيب الأسئلة بشكل عشوائي عند إعادة المحاولة
+            shuffleArray(quizData);
+
+            document.getElementById('score').textContent = score; // تحديث قيمة العداد إلى الصفر
+            loadQuestion();
+            resetColors();
+
+            document.getElementById('result-container').style.display = 'none';
+            document.getElementById('retryBtn').style.display = 'none';
+        }
+
+        loadQuestion();
+    </script>
+
+</body>
+
+</html>
